@@ -1,6 +1,8 @@
+const { PubSub } = require("apollo-server");
 const { authenticated, authorized } = require("./auth");
 const NEW_POST = "NEW_POST";
 
+const pubSub = new PubSub();
 /**
  * Anything Query / Mutation resolver
  * using a user for a DB query
@@ -76,6 +78,11 @@ module.exports = {
 
       const token = createToken(user);
       return { token, user };
+    }
+  },
+  Subscription: {
+    newPost: {
+      subscribe: () => pubsub.asyncIterator(NEW_POST)
     }
   },
   User: {
