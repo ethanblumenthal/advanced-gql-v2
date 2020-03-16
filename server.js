@@ -1,12 +1,30 @@
-const { ApolloServer, PubSub } = require("apollo-server");
+const {
+  ApolloServer,
+  PubSub,
+  SchemaDirectiveVisitor
+} = require("apollo-server");
+const { defaultFieldResolver } = require("graphql");
 const gql = require("graphql-tag");
 
 const pubSub = new PubSub();
 const NEW_ITEM = "NEW_ITEM";
 
+class LogDirective extends SchemaDirectiveVisitor {
+  visitFIELDDEFINITION(field) {
+    const resolver = field.resolve || defaultFieldResolver;
+
+    field.resolve = (...args) => {
+      console.log("Hi");
+      return resolver.apply(this, args);
+    };
+  }
+}
+
 const typeDefs = gql`
+  directive @log on FIELD_DEFINITION
+
   type User {
-    id: ID!
+    id: ID! @log
     username: String!
     createdAt: Int!
   }
@@ -85,6 +103,7 @@ const resolvers = {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  schemaDirectives: { log: LogDirective },
   context({ connection }) {
     if (connection) {
       return { ...connection.context };
